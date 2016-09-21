@@ -49,7 +49,7 @@ Setup
        <field column="id" name="id"/>
        <field column="bar" name="bar_s"/>
  
-       <!-- Dependent Tables -->
+       <!-- Dependent Key/Value Pairs -->
        <entity
            dataSource="redis"
            processor="RedisEntityProcessor"
