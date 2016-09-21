@@ -13,18 +13,35 @@ import static org.apache.solr.handler.dataimport.DataImportHandlerException.SEVE
 
 public class RedisDataSource extends DataSource<Iterator<Map<String, Object>>> {
 
-    private static final String REDIS_URI = "url";
+    private static final String HOST = "host";
+    private static final String PORT = "port";
+    private static final String SSL = "ssl";
+    private static final int DEFAULT_PORT = 6379;
+    private static final boolean USE_SSL = false;
     private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
     private Jedis redis;
 
     @Override
     public void init(Context context, Properties initProps) {
-        String url = initProps.getProperty(REDIS_URI);
-        if (url == null) {
-            throw new DataImportHandlerException(SEVERE, "Redis URL must be supplied");
+        String host = initProps.getProperty(HOST);
+        String port = initProps.getProperty(PORT);
+        String ssl = initProps.getProperty(SSL);
+        int targetPort = DEFAULT_PORT;
+        boolean useSsl = USE_SSL;
+
+        if (host == null || host.isEmpty()) {
+            throw new DataImportHandlerException(SEVERE, "Redis host must be supplied");
         }
 
-        this.redis = new Jedis(url);
+        if (port != null && !port.isEmpty() && tryParseInt(port)) {
+            targetPort = Integer.parseInt(port);
+        }
+
+        if (ssl != null && !ssl.isEmpty() && tryParseBool(ssl)) {
+            useSsl = Boolean.parseBoolean(ssl);
+        }
+
+        this.redis = new Jedis(host, targetPort, useSsl);
     }
 
     @Override
@@ -68,6 +85,24 @@ public class RedisDataSource extends DataSource<Iterator<Map<String, Object>>> {
         }
 
         return results;
+    }
+
+    private boolean tryParseInt(String value) {
+        try {
+            Integer.parseInt(value);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private boolean tryParseBool(String value) {
+        try {
+            Boolean.parseBoolean(value);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
 }
